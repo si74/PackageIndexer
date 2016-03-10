@@ -1,10 +1,27 @@
 import socket
+import threading
+import time
 
 #important variables
 TCP_IP = '127.0.01'
 TCP_PORT = 8080
 BUFFER_SIZE = 1024
-MAX_THREADS = 
+
+class ClientThread(Thread):
+ 
+    def __init__(self,ip,port):
+        Thread.__init__(self)
+        self.ip = ip
+        self.port = port
+        print "[+] New thread started for "+ip+":"+str(port)
+ 
+ 
+    def run(self):
+        while True:
+            data = conn.recv(2048)
+            if not data: break
+            print "received data:", data
+            conn.send(data)  # echo
 
 if __name__ == "__main__":
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

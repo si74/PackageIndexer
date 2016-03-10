@@ -1,6 +1,6 @@
 class Package:
 
-	def __init__(self,name,dependencies):
+	def __init__(self,name):
 		self.name = name
 
 		#current packages dependencies
@@ -9,14 +9,15 @@ class Package:
 		#other packages that depend upon this package
 		self.used_by = []
 
-	def addDependency(self, dep):
+	def addDependencies(self, dependencies):
 
-		#check if dependency already was added
-		if dep in self.requires:
-			return False
-		else:
-			self.requires.append(dep)
-			return True
+		for dependency in dependencies: 
+
+			#check if dependency already was added
+			if dependency in self.requires: return False
+			else: self.requires.append(dependency)
+		
+		return True
 
 	def addUsedBy(self, used):
 
