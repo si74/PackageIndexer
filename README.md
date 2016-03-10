@@ -1,7 +1,18 @@
 # PackageIndexer
 
-## Run index.py to begin tcp server
+## Setup
+Make Sure you have vagrant and virtualbox installed:
+(If you have homebrew cask and or on MacOSX for example):
+`brew cask install virtualbox`
+`brew cask install virtualbox-extension-pack`
+`brew cask install vagrant`
 
+Go to directory with vagrantfile and do the following: 
+`vagrant up`
+`vagrant ssh`
+
+## Run index.py to begin tcp server
+`cd var/www`
 `python index.py`
 
 ## Basic Tests
@@ -29,3 +40,7 @@ Full honesty - I had little experience with this and engaged in substantial goog
 Testing - 
 There are a couple of things I did here. I wanted to test the actuall package and graph modules and then the socket server. I know that Python does have a proper unittest module which I could have utilized to have more formal unit tests but in the interest of time, I did some one-off assertions. 
 And then of course - I used the appropriate testing harness provided. 
+
+Vagrant vs. Docker -
+Initial suggestion was to use docker containers. Unfortunately I am more experienced with Vagrant/Virtualbox so in the interest of time, I decided to use that. 
+
