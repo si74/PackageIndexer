@@ -36,12 +36,28 @@ if __name__ == "__main__":
 	connect = Connect()
 
 	#thoroughly testing glaring errors in commands
-	connect.send("STATUS")
-	connect.send("STATUS|banana")
-	connect.send("REMOVE|banana|hooha")
-	connect.send("QUERY|banana|poop")
-	connect.send("INDEX|monkey|23haha,")
+	assert(connect.send("STATUS") == "ERROR\n"), "not a legitimate command"
+	assert(connect.send("STATUS|banana") == "ERROR\n"), "still not a legitimate command"
+	assert(connect.send("REMOVE|banana|hooha") == "ERROR\n"), "still not a legitimate command"
+	assert(connect.send("QUERY|banana|poop") == "ERROR\n"), "can't have dependencies here bozo"
+	assert(connect.send("INDEX|monkey|23haha,") == "ERROR\n"), "not valid identifier for package"
 
-	connect.send("INDEX|monkey")
+	#testing more intense situations
+	#Testing indexing
+	assert(connect.send("INDEX|monkey") == "OK\n"), "should be able to add"
+	assert(connect.send("INDEX|monkey") == "FAIL\n"), "can't add this shit twice"
+	assert(connect.send("INDEX|kitten|monkey,tuna,") == "FAIL\n"), "dependent package not added"
+	assert(connect.send("INDEX|tuna") == "OK\n"), "should be able to add"
+	assert(connect.send("INDEX|kitten|monkey,tuna,") == "OK\n"), "dependencies good so should work"
 
+	#Testing queries
+	assert(connect.send("QUERY|dog") == "FAIL\n"), "hasn't been added so should fail"
+	assert(connect.send("QUERY|kitten") == "OK\n"), "hasn't been added so should fail"
+
+	#Testing removaln
+	assert(connect.send("REMOVE|monkey") == "FAIL\n"), "packages still dependent on this"
+	assert(connect.send("REMOVE|tuna") == "FAIL\n"), "packages still dependent on this"
+	assert(connect.send("REMOVE|kitten") == "OK\n"), "can easily remove"
+	assert(connect.send("REMOVE|monkey") == "OK\n"), "can finally remove now"
+	
     

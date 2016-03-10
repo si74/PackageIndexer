@@ -65,8 +65,6 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
 if __name__ == "__main__":
     HOST, PORT = "127.0.01", 8080
-
-    # Create the server, binding to localhost on port 9999
     SocketServer.TCPServer.allow_reuse_address = True
     server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
 
