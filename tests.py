@@ -1,4 +1,3 @@
-import package
 from packageGraph import PackageGraph
 
 #one-off file to quickly test the package node class and package class

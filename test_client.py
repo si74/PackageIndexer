@@ -8,7 +8,7 @@ TCP_IP = '127.0.0.1'
 TCP_PORT = 8080
 BUFFER_SIZE = 1024
 
-class ConnectThread(threading.Thread):
+class Connect(object):
 
     def connect(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -32,14 +32,16 @@ class ConnectThread(threading.Thread):
         sock.close()
         return recv_data
 
-    def run(self,threadCount):
-    	count = 0
-    	for x in xrange(100):
-    		self.send(str(threadCount) + " STATUS"+str(count))
-    		time.sleep(2)
-    		count += 1
-
 if __name__ == "__main__":
-	for x in xrange(5):
-		ConnectThread().run(x)
+	connect = Connect()
+
+	#thoroughly testing glaring errors in commands
+	connect.send("STATUS")
+	connect.send("STATUS|banana")
+	connect.send("REMOVE|banana|hooha")
+	connect.send("QUERY|banana|poop")
+	connect.send("INDEX|monkey|23haha,")
+
+	connect.send("INDEX|monkey")
+
     

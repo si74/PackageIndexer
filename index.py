@@ -1,171 +1,74 @@
-# import socket
-# import threading
-# import time
-
-# #important variables
-# TCP_IP = '127.0.01'
-# TCP_PORT = 8080
-# BUFFER_SIZE = 1024
-
-# #ATTEMPT 1- USING SOCKETS
-# import socket
-# from threading import Thread
-# from SocketServer import ThreadingMixIn
- 
-# class ClientThread(Thread):
- 
-#     def __init__(self,ip,port):
-#         Thread.__init__(self)
-#         self.ip = ip
-#         self.port = port
-#         print "[+] New thread started for "+ip+":"+str(port)
- 
- 
-#     def run(self):
-#         while True:
-#             data = conn.recv(2048)
-#             if not data: break
-#             print "received data:", data
-#             conn.send(data)  # echo
- 
-# TCP_IP = '0.0.0.0'
-# TCP_PORT = 62
-# BUFFER_SIZE = 20  # Normally 1024, but we want fast response
- 
- 
-# tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-# tcpsock.bind((TCP_IP, TCP_PORT))
-# threads = []
- 
-# while True:
-#     tcpsock.listen(4)
-#     print "Waiting for incoming connections..."
-#     (conn, (ip,port)) = tcpsock.accept()
-#     newthread = ClientThread(ip,port)
-#     newthread.start()
-#     threads.append(newthread)
- 
-# for t in threads:
-#     t.join()
-
-# #ATTEMPT 2 -
-
-# #!/usr/bin/env python 
-
-# """ 
-# An echo server that uses threads to handle multiple clients at a time. 
-# Entering any line of input at the terminal will exit the server. 
-# """ 
-
-# import select 
-# import socket 
-# import sys 
-# import threading 
-
-# class Server: 
-#     def __init__(self): 
-#         self.host = '' 
-#         self.port = 50000 
-#         self.backlog = 5 
-#         self.size = 1024 
-#         self.server = None 
-#         self.threads = [] 
-
-#     def open_socket(self): 
-#         try: 
-#             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-#             self.server.bind((self.host,self.port)) 
-#             self.server.listen(5) 
-#         except socket.error, (value,message): 
-#             if self.server: 
-#                 self.server.close() 
-#             print "Could not open socket: " + message 
-#             sys.exit(1) 
-
-#     def run(self): 
-#         self.open_socket() 
-#         input = [self.server,sys.stdin] 
-#         running = 1 
-#         while running: 
-#             inputready,outputready,exceptready = select.select(input,[],[]) 
-
-#             for s in inputready: 
-
-#                 if s == self.server: 
-#                     # handle the server socket 
-#                     c = Client(self.server.accept()) 
-#                     c.start() 
-#                     self.threads.append(c) 
-
-#                 elif s == sys.stdin: 
-#                     # handle standard input 
-#                     junk = sys.stdin.readline() 
-#                     running = 0 
-
-#         # close all threads 
-
-#         self.server.close() 
-#         for c in self.threads: 
-#             c.join() 
-
-# class Client(threading.Thread): 
-#     def __init__(self,(client,address)): 
-#         threading.Thread.__init__(self) 
-#         self.client = client 
-#         self.address = address 
-#         self.size = 1024 
-
-#     def run(self): 
-#         running = 1 
-#         while running: 
-#             data = self.client.recv(self.size) 
-#             if data: 
-#                 self.client.send(data) 
-#             else: 
-#                 self.client.close() 
-#                 running = 0 
-
-# if __name__ == "__main__": 
-#     s = Server() 
-#     s.run()
-
-#ATTEMPT 3 - 
-#APPROACH TO THIS
+import re
 import SocketServer
+from packageGraph import PackageGraph
+#instantiate global graph object 
+graph = PackageGraph()
 
 class MyTCPHandler(SocketServer.BaseRequestHandler):
-    """
-    The request handler class for our server.
-
-    It is instantiated once per connection to the server, and must
-    override the handle() method to implement communication to the
-    client.
-    """
+    
+    #variables accessible by the class
+    COMMANDS = ['INDEX','REMOVE','QUERY']
+    identifier = re.compile(r"^[^\d\W]\w*\Z", re.UNICODE)
 
     def handle(self):
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
+
         print "{} wrote:".format(self.client_address[0])
         print self.data
+
+        result = self.analyzeRequest(self.data)
+        print result
+
         # just send back the same data, but upper-cased
-        self.request.sendall(self.data.upper())
+        self.request.sendall(result)
+
+    def parseMessage(self,message):
+
+    	split_msg = message.rstrip("\n").split('|')
+    	msg = map(lambda x: x.strip(" "), split_msg) #a bit forgiving of trailing whitespace
+
+    	#if insufficient commands or incorrect commands
+    	if (len(msg) not in [2,3] or msg[0] not in self.COMMANDS): return False
+    	
+    	#for query or remove, dependencies should NOT be given
+    	if (msg[0] in ['REMOVE','QUERY'] and len(msg) > 2): return False
+
+    	#for index, if dependencies given, ensure the dependencies are of the correct structure
+    	dependencies = []
+    	if (msg[0] == 'INDEX' and len(msg) == 3):
+    			dependencies = msg[2].rstrip(",").split(',') #a bit forgiving to trailing commas
+    			for d in dependencies:
+    				if not self.validIdentifier(d): return False
+
+    	return [msg[0],msg[1],dependencies]
+
+    def validIdentifier(self,string):
+    	return (re.match(self.identifier, string) is not None)
+
+    def analyzeRequest(self, message):
+
+    	#first ensure that the message is of the correct format
+    	cleanedMessage = self.parseMessage(message)
+    	if not cleanedMessage: return "ERROR\n"
+
+    	#try attempting actions
+    	if cleanedMessage[0] == 'INDEX':
+    		result = graph.addPackage(cleanedMessage[1],cleanedMessage[2])
+    	elif cleanedMessage[0] == 'REMOVE':
+    		result = graph.removePackage(cleanedMessage[1])
+    	elif cleanedMessage[0] == 'QUERY':
+    		result = graph.getPackage(cleanedMessage[1])
+
+    	return "FAIL\n" if not result else "OK\n" 
+
 
 if __name__ == "__main__":
     HOST, PORT = "127.0.01", 8080
 
     # Create the server, binding to localhost on port 9999
+    SocketServer.TCPServer.allow_reuse_address = True
     server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
 
     # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
     server.serve_forever()
-
-
-#Ensure message sent is of the correct format using regex
-#<command>|<package>|<dependencies>
-
-#ensure that the command is legitimate
-
-
-#
