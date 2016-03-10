@@ -43,6 +43,9 @@ class PackageGraph:
 
 	def removePackage(self,package):
 
+		#check if package actually exists
+		if package not in self.packages: return False
+
 		#check if other package depends on this
 		if len(self.packages[package].used_by) > 0: return False
 

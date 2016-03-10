@@ -11,6 +11,9 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
     identifier = re.compile(r"^[^\d\W]\w*\Z", re.UNICODE)
 
     def handle(self):
+
+        print self.request.recv(1024)
+        
         # self.request is the TCP socket connected to the client
         self.data = self.request.recv(1024).strip()
 
@@ -25,7 +28,7 @@ class MyTCPHandler(SocketServer.BaseRequestHandler):
 
     def parseMessage(self,message):
 
-    	split_msg = message.rstrip("\n").split('|')
+    	split_msg = message.rstrip("\n").rstrip('|').split('|')
     	msg = map(lambda x: x.strip(" "), split_msg) #a bit forgiving of trailing whitespace
 
     	#if insufficient commands or incorrect commands
